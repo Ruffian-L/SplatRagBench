@@ -251,6 +251,30 @@ def run_splatrag(corpus, queries, config_name="Default", w_cos=10.0, w_bm25=1.0,
             
     return results
 
+def rrf_merge(results_list, k=60):
+    """
+    Reciprocal Rank Fusion.
+    results_list: list of dicts {qid: [doc_id1, doc_id2, ...]}
+    """
+    merged_scores = {} # qid -> {doc_id -> score}
+    
+    for results in results_list:
+        for qid, doc_ids in results.items():
+            if qid not in merged_scores:
+                merged_scores[qid] = {}
+            for rank, doc_id in enumerate(doc_ids):
+                if doc_id not in merged_scores[qid]:
+                    merged_scores[qid][doc_id] = 0.0
+                merged_scores[qid][doc_id] += 1.0 / (k + rank + 1)
+                
+    # Sort and take top K
+    final_results = {}
+    for qid, scores in merged_scores.items():
+        sorted_docs = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        final_results[qid] = [doc_id for doc_id, score in sorted_docs[:K]]
+        
+    return final_results
+
 def run_langchain_bm25(corpus, queries):
     if not LANGCHAIN_AVAILABLE:
         return {}
@@ -308,11 +332,29 @@ def main():
     ]
 
     # 1.5 Run LangChain BM25
+    lc_results = {}
     if LANGCHAIN_AVAILABLE:
         print("\nRunning LangChain BM25...")
         lc_results = run_langchain_bm25(corpus, queries)
         lc_ndcg, lc_recall = evaluate_system("LangChain (BM25)", lc_results, qrels, K)
         results_data.append({"Framework": "LangChain (BM25)", "nDCG@10": lc_ndcg, "Recall@10": lc_recall})
+
+    # 1.6 Run RAGFlow (Simulated)
+    print("\nRunning RAGFlow (Simulated)...")
+    # RAGFlow uses Hybrid Search (BM25 + Vector).
+    # We simulate this by combining LangChain BM25 (Standard) + SplatRag Dense (Nomic).
+    # We use RRF to merge them, which is standard practice.
+    
+    # Get Dense Results (using SplatRag engine with BM25=0, Rad=0)
+    dense_results = run_splatrag(corpus, queries, "Dense_Temp", w_cos=10.0, w_bm25=0.0, w_rad=0.0)
+    
+    # Combine LangChain BM25 + Dense
+    # Note: If LangChain failed, we fallback to Python BM25
+    bm25_source = lc_results if LANGCHAIN_AVAILABLE and lc_results else bm25_results
+    
+    rf_results = rrf_merge([bm25_source, dense_results])
+    rf_ndcg, rf_recall = evaluate_system("RAGFlow (Hybrid)", rf_results, qrels, K)
+    results_data.append({"Framework": "RAGFlow (Hybrid)", "nDCG@10": rf_ndcg, "Recall@10": rf_recall})
 
     # 2. Run SplatRag Ablation Study
     print("\nRunning SplatRag Ablation Study...")
@@ -348,8 +390,8 @@ def main():
         plt.style.use('ggplot')
         
         # Remove old file if exists to ensure update
-        if os.path.exists('rag_benchmark_v2.png'):
-            os.remove('rag_benchmark_v2.png')
+        if os.path.exists('rag_benchmark_v3.png'):
+            os.remove('rag_benchmark_v3.png')
         
         names = [r["Framework"] for r in results_data]
         ndcg = [r["nDCG@10"] for r in results_data]
@@ -383,8 +425,8 @@ def main():
         autolabel(rects2)
 
         plt.subplots_adjust(bottom=0.25) # Give more room for labels
-        plt.savefig("rag_benchmark_v2.png", dpi=300)
-        print("Plot saved to rag_benchmark_v2.png")
+        plt.savefig("rag_benchmark_v3.png", dpi=300)
+        print("Plot saved to rag_benchmark_v3.png")
     except ImportError:
         print("Matplotlib not found, skipping plot.")
 

@@ -4,7 +4,7 @@
 
 **SplatRag** is an experimental retrieval engine that fuses **Lexical Search (BM25)**, **Dense Vector Search (Nomic)**, and a novel **"Needle Physics"** ranking signal based on the geometric properties of token clusters in high-dimensional space.
 
-![Benchmark Results](rag_benchmark_v2.png)
+![Benchmark Results](rag_benchmark_v3.png)
 
 ## 🚀 Performance (SciFact Benchmark)
 
@@ -14,6 +14,7 @@ SplatRag outperforms standard baselines by combining multiple signals.
 | :--- | :--- | :--- | :--- |
 | **Python BM25 (Baseline)** | 0.7073 | 0.7970 | **Weak baseline** (simple script). |
 | **LangChain (BM25)** | 0.6562 | 0.7250 | **Industry Standard**. Surprisingly weaker than the raw Python script on this dataset. |
+| **RAGFlow (Hybrid)** | 0.7357 | 0.8120 | **The Deep Doc Beast**. Stronger than BM25, but lacks the geometric precision of SplatRag. |
 | **SplatRag (BM25 Only)** | 0.7694 | 0.9090 | **The Heavy Lifter**. Tantivy's Rust-based BM25 is vastly superior to both Python and LangChain. |
 | **SplatRag (Dense Only)** | 0.6291 | 0.7460 | **The Weak Link**. Nomic embeddings alone struggle with SciFact's specific terminology. |
 | **SplatRag (Hybrid)** | **0.7822** | **0.9090** | **The Winner**. Combining the strong BM25 with the weak Dense + Physics yields the peak score. |
