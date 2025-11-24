@@ -1,0 +1,36 @@
+#!/bin/bash
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}=== SplatRag Benchmark Standalone ===${NC}"
+
+# 0. Check for Rust/Cargo
+if ! command -v cargo &> /dev/null; then
+    echo "Rust (cargo) could not be found."
+    echo "Installing Rust via rustup..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
+else
+    echo "Rust is already installed."
+fi
+
+# 1. Setup Python Environment
+if [ ! -d "venv" ]; then
+    echo "Creating Python virtual environment..."
+    python3 -m venv venv
+fi
+
+echo "Installing Python dependencies..."
+./venv/bin/pip install -r requirements.txt
+
+# 2. Build Rust Binary
+echo -e "${GREEN}Building SplatRag Rust binaries...${NC}"
+cargo build --release --bin retrieve
+cargo build --release --bin ingest
+
+# 3. Run Benchmark
+echo -e "${GREEN}Running Benchmark...${NC}"
+./venv/bin/python rag_benchmark.py

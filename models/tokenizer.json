@@ -1,0 +1,39 @@
+{
+    "version": "1.0",
+    "truncation": null,
+    "padding": null,
+    "added_tokens": [],
+    "normalizer": null,
+    "pre_tokenizer": {
+        "type": "Whitespace"
+    },
+    "post_processor": null,
+    "decoder": null,
+    "model": {
+        "type": "BPE",
+        "dropout": null,
+        "unk_token": null,
+        "continuing_subword_prefix": null,
+        "end_of_word_suffix": null,
+        "fuse_unk": false,
+        "vocab": {
+            "The": 0,
+            "quick": 1,
+            "brown": 2,
+            "fox": 3,
+            "jumps": 4,
+            "over": 5,
+            "the": 6,
+            "lazy": 7,
+            "dog": 8,
+            ".": 9,
+            "Patterns": 10,
+            "emerge": 11,
+            "from": 12,
+            "repetition": 13,
+            "in": 14,
+            "void": 15
+        },
+        "merges": []
+    }
+}

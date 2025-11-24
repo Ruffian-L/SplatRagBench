@@ -1,0 +1,50 @@
+0-dimensional biomaterials show inductive properties.
+1,000 genomes project enables mapping of genetic sequence variation consisting of rare variants with larger penetrance effects than common variants.
+1/2000 in UK have abnormal PrP positivity.
+5% of perinatal mortality is due to low birth weight.
+A deficiency of vitamin B12 increases blood levels of homocysteine.
+A high microerythrocyte count raises vulnerability to severe anemia in homozygous alpha (+)- thalassemia trait subjects.
+A total of 1,000 people in the UK are asymptomatic carriers of vCJD infection.
+ADAR1 binds to Dicer to cleave pre-miRNA.
+AIRE is expressed in some skin tumors.
+ALDH1 expression is associated with better breast cancer outcomes.
+ALDH1 expression is associated with poorer prognosis in breast cancer.
+AMP-activated protein kinase (AMPK) activation increases inflammation-related fibrosis in the lungs.
+APOE4 expression in iPSC-derived neurons increases AlphaBeta production and tau phosphorylation causing GABA neuron degeneration.
+APOE4 expression in iPSC-derived neurons increases AlphaBeta production and tau phosphorylation, delaying GABA neuron degeneration.
+Activation of PPM1D suppresses p53 function.
+Activator-inhibitor pairs are provided dorsally by Admpchordin.
+Active H. pylori urease has a polymeric structure that compromises two subunits, UreA and UreB.
+Albendazole is used to treat lymphatic filariasis.
+Alizarin forms hydrogen bonds with residues involved in PGAM1 substrate binding.
+All hematopoietic stem cells segregate their chromosomes randomly.
+Angiotensin converting enzyme inhibitors are associated with increased risk for functional renal insufficiency.
+Anthrax spores can be disposed of easily after they are dispersed.
+Antibiotic induced alterations in the gut microbiome reduce resistance against Clostridium difficile
+Antiretroviral therapy reduces rates of tuberculosis across a broad range of CD4 strata.
+Arginine 90 in p150n is important for interaction with EB1.
+Arterioles have a larger lumen diameter than venules.
+Articles published in open access format are less likely to be cited than traditional journals.
+Articles published in open access format are more likely to be cited than traditional journals.
+Aspirin inhibits the production of PGE2.
+Assembly of invadopodia is triggered by focal generation of phosphatidylinositol-3,4-biphosphate and the activation of the nonreceptor tyrosine kinase Src.
+Asymptomatic visual impairment screening in elderly populations does not lead to improved vision.
+Auditory entrainment is strengthened when people see congruent visual and auditory information.
+Autologous transplantation of mesenchymal stem cells causes a higher rate of opportunistic infections than induction therapy with anti-interleukin-2 receptor antibodies.
+Autologous transplantation of mesenchymal stem cells causes fewer opportunistic infections than induction therapy with anti-interleukin-2 receptor antibodies.
+Autologous transplantation of mesenchymal stem cells has lower rates of rejection than induction therapy with anti-interleukin-2 receptor antibodies.
+Autophagy declines in aged organisms.
+Bariatric surgery has a positive impact on mental health.
+Basophils counteract disease development in patients with systemic lupus erythematosus (SLE).
+Birth-weight is positively associated with breast cancer.
+Blocking the interaction between TDP-43 and respiratory complex I proteins ND3 and ND6 leads to increased TDP-43-induced neuronal loss.
+Bone marrow cells contribute to adult macrophage compartments.
+Breast cancer development is determined exclusively by genetic factors.
+CCL19 is absent within dLNs.
+CHEK2 is not associated with breast cancer.
+CR is associated with higher methylation age.
+CRP is not predictive of postoperative mortality following Coronary Artery Bypass Graft (CABG) surgery.
+CX3CR1 on the Th2 cells impairs T cell survival
+CX3CR1 on the Th2 cells promotes T cell survival
+CX3CR1 on the Th2 cells promotes airway inflammation.
+CX3CR1 on the Th2 cells suppresses airway inflammation.

@@ -1,0 +1,77 @@
+[package]
+name = "splatrag"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+candle-core = { version = "0.8.0" }
+candle-nn = { version = "0.8.0" }
+candle-transformers = { version = "0.8.0" }
+clap = { version = "4.5", features = ["derive", "env"] }
+
+hf-hub = "0.4"
+memmap2 = "0.9"
+nalgebra = { version = "0.32", features = ["serde-serialize"] }
+rayon = "1.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde-big-array = "0.5"
+bytemuck = { version = "1.14", features = ["derive"] }
+statrs = "0.17"
+tantivy = "0.22"
+tokenizers = "0.19"
+bincode = "1.3"
+cudarc = { version = "0.13.9", features = ["cuda-12020", "driver", "nvrtc", "std"] }
+glam = { version = "0.30.9", features = ["serde"] }
+rkyv = "0.8"
+tracing = "0.1.41"
+flate2 = "1.1.5"
+axum = "0.8.7"
+tokio = "1.48.0"
+reqwest = "0.12.24"
+rand = "0.8.5"
+rand_distr = "0.4.3"
+rusqlite = "0.37.0"
+md5 = "0.7.0"
+rerun = "0.27.2"
+notify = "8.2.0"
+hnsw_rs = "0.3.3"
+chrono = "0.4.42"
+uuid = "1.18.1"
+urlencoding = "2.1.3"
+tempfile = "3.23.0"
+digest = "0.10.7"
+colored = "3.0.0"
+dotenvy = "0.15.7"
+tracing-subscriber = "0.3.20"
+toml = "0.9.8"
+lophat = "0.11"
+home = "0.5"
+ed25519-dalek = "2.1"
+sha2 = "0.10"
+csv = "1.3"
+lazy_static = "1.4"
+ndarray = "0.15"
+ndarray-npy = "0.8"
+half = { version = "2.4", features = ["serde", "num-traits"] }
+
+[features]
+default = ["cuda"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
+gpu-acceleration = []
+
+[[bin]]
+name = "check_z"
+path = "check_z.rs"
+
+[[bin]]
+name = "hell"
+path = "src/bin/hell.rs"
+
+[[bin]]
+name = "test_npy"
+path = "test_npy.rs"
+
+[dev-dependencies]
+proptest = "1.9.0"
