@@ -348,8 +348,8 @@ def main():
         plt.style.use('ggplot')
         
         # Remove old file if exists to ensure update
-        if os.path.exists('rag_benchmark.png'):
-            os.remove('rag_benchmark.png')
+        if os.path.exists('rag_benchmark_v2.png'):
+            os.remove('rag_benchmark_v2.png')
         
         names = [r["Framework"] for r in results_data]
         ndcg = [r["nDCG@10"] for r in results_data]
@@ -383,8 +383,8 @@ def main():
         autolabel(rects2)
 
         plt.subplots_adjust(bottom=0.25) # Give more room for labels
-        plt.savefig("rag_benchmark.png", dpi=300)
-        print("Plot saved to rag_benchmark.png")
+        plt.savefig("rag_benchmark_v2.png", dpi=300)
+        print("Plot saved to rag_benchmark_v2.png")
     except ImportError:
         print("Matplotlib not found, skipping plot.")
 

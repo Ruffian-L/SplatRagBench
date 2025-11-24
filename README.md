@@ -4,7 +4,7 @@
 
 **SplatRag** is an experimental retrieval engine that fuses **Lexical Search (BM25)**, **Dense Vector Search (Nomic)**, and a novel **"Needle Physics"** ranking signal based on the geometric properties of token clusters in high-dimensional space.
 
-![Benchmark Results](rag_benchmark.png)
+![Benchmark Results](rag_benchmark_v2.png)
 
 ## 🚀 Performance (SciFact Benchmark)
 
