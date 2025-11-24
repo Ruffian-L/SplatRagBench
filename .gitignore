@@ -3,3 +3,6 @@ venv/
 __pycache__/
 *.pyc
 .DS_Store
+src/nomic_daemon.py
+src/memory_topology.py
+src/shaders/

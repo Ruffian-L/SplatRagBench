@@ -30,6 +30,17 @@ except ImportError:
     LLAMAINDEX_AVAILABLE = False
     print("LlamaIndex not found. Skipping LlamaIndex benchmarks.")
 
+try:
+    from haystack import Document as HaystackDocument, Pipeline
+    from haystack.document_stores.in_memory import InMemoryDocumentStore
+    from haystack.components.embedders import SentenceTransformersDocumentEmbedder, SentenceTransformersTextEmbedder
+    from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
+    from haystack.utils import ComponentDevice
+    HAYSTACK_AVAILABLE = True
+except ImportError:
+    HAYSTACK_AVAILABLE = False
+    print("Haystack not found. Skipping Haystack benchmarks.")
+
 # Config
 DATASET = "scifact"
 SPLIT = "test"
@@ -352,6 +363,69 @@ def run_txtai_dense(corpus, queries):
         
     return results
 
+def run_haystack_dense(corpus, queries):
+    if not HAYSTACK_AVAILABLE:
+        return {}
+    
+    print("Initializing Haystack (Dense)...")
+    
+    # Components
+    document_store = InMemoryDocumentStore()
+    
+    # Use CUDA if available
+    import torch
+    device_str = "cuda:0" if torch.cuda.is_available() else "cpu"
+    device = ComponentDevice.from_str(device_str)
+    
+    doc_embedder = SentenceTransformersDocumentEmbedder(
+        model="nomic-ai/nomic-embed-text-v1.5", 
+        device=device,
+        meta_fields_to_embed=[],
+        embedding_separator=". ",
+        trust_remote_code=True
+    )
+    
+    text_embedder = SentenceTransformersTextEmbedder(
+        model="nomic-ai/nomic-embed-text-v1.5", 
+        device=device,
+        trust_remote_code=True
+    )
+    
+    retriever = InMemoryEmbeddingRetriever(document_store=document_store, top_k=K)
+    
+    from haystack.components.writers import DocumentWriter
+
+    # Pipeline: Indexing
+    indexing_pipeline = Pipeline()
+    indexing_pipeline.add_component("embedder", doc_embedder)
+    indexing_pipeline.add_component("writer", DocumentWriter(document_store=document_store))
+    indexing_pipeline.connect("embedder", "writer")
+    
+    # Create Documents
+    documents = [
+        HaystackDocument(content=f"{doc['title']}. {doc['text']}", id=doc["_id"])
+        for doc in corpus
+    ]
+    
+    print("Indexing corpus with Haystack...")
+    indexing_pipeline.run({"embedder": {"documents": documents}})
+    
+    # Pipeline: Querying
+    query_pipeline = Pipeline()
+    query_pipeline.add_component("text_embedder", text_embedder)
+    query_pipeline.add_component("retriever", retriever)
+    query_pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
+    
+    results = {}
+    print("Querying Haystack...")
+    for q in queries:
+        qid = q["_id"]
+        result = query_pipeline.run({"text_embedder": {"text": q["text"]}})
+        retrieved_docs = result["retriever"]["documents"]
+        results[qid] = [d.id for d in retrieved_docs]
+        
+    return results
+
 def run_llamaindex_dense(corpus, queries):
     if not LLAMAINDEX_AVAILABLE:
         return {}
@@ -480,6 +554,18 @@ def main():
         
         li_ndcg, li_recall = evaluate_system("LlamaIndex (Hybrid)", li_hybrid_results, qrels, K)
         results_data.append({"Framework": "LlamaIndex (Hybrid)", "nDCG@10": li_ndcg, "Recall@10": li_recall})
+
+    # 1.9 Run Haystack (Hybrid)
+    if HAYSTACK_AVAILABLE:
+        print("\nRunning Haystack (Hybrid)...")
+        # Haystack Dense (Nomic)
+        hs_dense_results = run_haystack_dense(corpus, queries)
+        
+        # Fuse with BM25
+        hs_hybrid_results = rrf_merge([bm25_source, hs_dense_results])
+        
+        hs_ndcg, hs_recall = evaluate_system("Haystack (Hybrid)", hs_hybrid_results, qrels, K)
+        results_data.append({"Framework": "Haystack (Hybrid)", "nDCG@10": hs_ndcg, "Recall@10": hs_recall})
 
     # 2. Run SplatRag Ablation Study
     print("\nRunning SplatRag Ablation Study...")

@@ -8,6 +8,7 @@ LangChain (BM25)          | 0.6562     | 0.7250
 RAGFlow (Hybrid)          | 0.7357     | 0.8120
 txtai (Hybrid)            | 0.7413     | 0.8450
 LlamaIndex (Hybrid)       | 0.7756     | 0.8610
+Haystack (Hybrid)         | 0.7545     | 0.8310
 SplatRag (BM25 Only)      | 0.7694     | 0.9090
 SplatRag (Dense Only)     | 0.6291     | 0.7460
 SplatRag (Hybrid)         | 0.7822     | 0.9090
