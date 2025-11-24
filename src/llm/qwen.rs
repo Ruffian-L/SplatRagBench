@@ -94,11 +94,23 @@ impl RotaryEmbedding {
     }
 
     fn apply_rotary_emb_qkv(&self, q: &Tensor, k: &Tensor, seq_len: usize) -> Result<(Tensor, Tensor)> {
-        let (_b_sz, _h, seq_len_in, _d) = q.dims4()?;
+        let (b_sz, h, seq_len_in, d) = q.dims4()?;
+        let (_b_sz_k, h_k, _seq_len_k, _d_k) = k.dims4()?;
+        
         let cos = self.cos.narrow(0, 0, seq_len)?;
         let sin = self.sin.narrow(0, 0, seq_len)?;
-        let q_embed = candle_nn::rotary_emb::rope(q, &cos, &sin)?;
-        let k_embed = candle_nn::rotary_emb::rope(k, &cos, &sin)?;
+        
+        // Reshape q, k to [B*H, S, D] to match rope's broadcasting expectation with [S, D]
+        let q_flat = q.reshape((b_sz * h, seq_len_in, d))?;
+        let k_flat = k.reshape((b_sz * h_k, seq_len_in, d))?;
+
+        let q_embed = candle_nn::rotary_emb::rope(&q_flat, &cos, &sin)?;
+        let k_embed = candle_nn::rotary_emb::rope(&k_flat, &cos, &sin)?;
+        
+        // Reshape back
+        let q_embed = q_embed.reshape((b_sz, h, seq_len_in, d))?;
+        let k_embed = k_embed.reshape((b_sz, h_k, seq_len_in, d))?;
+        
         Ok((q_embed, k_embed))
     }
 }
@@ -257,12 +269,13 @@ pub struct Model {
 
 impl Model {
     pub fn new(cfg: &Config, vb: VarBuilder) -> Result<Self> {
-        let embed_tokens = candle_nn::embedding(cfg.vocab_size, cfg.hidden_size, vb.pp("embed_tokens"))?;
+        let vb_m = vb.pp("model");
+        let embed_tokens = candle_nn::embedding(cfg.vocab_size, cfg.hidden_size, vb_m.pp("embed_tokens"))?;
         let mut layers = Vec::with_capacity(cfg.num_hidden_layers);
         for i in 0..cfg.num_hidden_layers {
-            layers.push(DecoderLayer::new(cfg, vb.pp(&format!("layers.{}", i)))?);
+            layers.push(DecoderLayer::new(cfg, vb_m.pp(&format!("layers.{}", i)))?);
         }
-        let norm = RmsNorm::new(cfg.hidden_size, cfg.rms_norm_eps, vb.pp("norm"))?;
+        let norm = RmsNorm::new(cfg.hidden_size, cfg.rms_norm_eps, vb_m.pp("norm"))?;
         
         // Try to load lm_head, otherwise fallback to tied embeddings
         let lm_head = match candle_nn::linear_no_bias(cfg.hidden_size, cfg.vocab_size, vb.pp("lm_head")) {

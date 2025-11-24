@@ -15,6 +15,21 @@ except ImportError:
     LANGCHAIN_AVAILABLE = False
     print("LangChain not found. Skipping LangChain benchmarks.")
 
+try:
+    from txtai.embeddings import Embeddings
+    TXTAI_AVAILABLE = True
+except ImportError:
+    TXTAI_AVAILABLE = False
+    print("txtai not found. Skipping txtai benchmarks.")
+
+try:
+    from llama_index.core import Document as LlamaDocument, VectorStoreIndex, Settings
+    from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+    LLAMAINDEX_AVAILABLE = True
+except ImportError:
+    LLAMAINDEX_AVAILABLE = False
+    print("LlamaIndex not found. Skipping LlamaIndex benchmarks.")
+
 # Config
 DATASET = "scifact"
 SPLIT = "test"
@@ -295,6 +310,80 @@ def run_langchain_bm25(corpus, queries):
         
     return results
 
+def run_txtai_dense(corpus, queries):
+    if not TXTAI_AVAILABLE:
+        return {}
+    
+    print("Initializing txtai Embeddings (Dense)...")
+    # Use Nomic v1.5 to match SplatRag's dense component
+    embeddings = Embeddings({
+        "path": "nomic-ai/nomic-embed-text-v1.5",
+        "content": True, # Store content for retrieval
+        "backend": "faiss",
+        "modelargs": {"trust_remote_code": True}
+    })
+    
+    # Index
+    print("Indexing corpus with txtai...")
+    data = [(doc["_id"], f"{doc['title']}. {doc['text']}", None) for doc in corpus]
+    embeddings.index(data)
+    
+    results = {}
+    print("Querying txtai...")
+    for q in queries:
+        qid = q["_id"]
+        # txtai search returns list of (id, score) or dicts
+        hits = embeddings.search(q["text"], limit=K)
+        
+        # Debug first hit if it fails
+        # print(hits[0]) 
+        
+        retrieved_ids = []
+        for hit in hits:
+            # Handle dict or tuple
+            if isinstance(hit, dict):
+                retrieved_ids.append(str(hit.get("id")))
+            elif isinstance(hit, (list, tuple)):
+                retrieved_ids.append(str(hit[0]))
+            else:
+                print(f"Unknown hit format: {hit}")
+                
+        results[qid] = retrieved_ids
+        
+    return results
+
+def run_llamaindex_dense(corpus, queries):
+    if not LLAMAINDEX_AVAILABLE:
+        return {}
+    
+    print("Initializing LlamaIndex (Dense)...")
+    
+    # Setup Embeddings (Nomic)
+    # We use the same model as SplatRag for fairness
+    embed_model = HuggingFaceEmbedding(model_name="nomic-ai/nomic-embed-text-v1.5", trust_remote_code=True)
+    Settings.embed_model = embed_model
+    Settings.llm = None # We don't need LLM for retrieval
+    
+    # Create Documents
+    documents = [
+        LlamaDocument(text=f"{doc['title']}. {doc['text']}", metadata={"id": doc["_id"]})
+        for doc in corpus
+    ]
+    
+    # Build Index
+    print("Indexing corpus with LlamaIndex...")
+    index = VectorStoreIndex.from_documents(documents)
+    retriever = index.as_retriever(similarity_top_k=K)
+    
+    results = {}
+    print("Querying LlamaIndex...")
+    for q in queries:
+        qid = q["_id"]
+        nodes = retriever.retrieve(q["text"])
+        results[qid] = [n.metadata["id"] for n in nodes]
+        
+    return results
+
 # --- Main ---
 
 def main():
@@ -356,6 +445,30 @@ def main():
     rf_ndcg, rf_recall = evaluate_system("RAGFlow (Hybrid)", rf_results, qrels, K)
     results_data.append({"Framework": "RAGFlow (Hybrid)", "nDCG@10": rf_ndcg, "Recall@10": rf_recall})
 
+    # 1.7 Run txtai (Hybrid)
+    if TXTAI_AVAILABLE:
+        print("\nRunning txtai (Hybrid)...")
+        # txtai Dense (Nomic)
+        txtai_dense_results = run_txtai_dense(corpus, queries)
+        
+        # Fuse with BM25 (using same source as RAGFlow for fairness)
+        txtai_hybrid_results = rrf_merge([bm25_source, txtai_dense_results])
+        
+        txtai_ndcg, txtai_recall = evaluate_system("txtai (Hybrid)", txtai_hybrid_results, qrels, K)
+        results_data.append({"Framework": "txtai (Hybrid)", "nDCG@10": txtai_ndcg, "Recall@10": txtai_recall})
+
+    # 1.8 Run LlamaIndex (Hybrid)
+    if LLAMAINDEX_AVAILABLE:
+        print("\nRunning LlamaIndex (Hybrid)...")
+        # LlamaIndex Dense (Nomic)
+        li_dense_results = run_llamaindex_dense(corpus, queries)
+        
+        # Fuse with BM25 (using same source as others for fairness)
+        li_hybrid_results = rrf_merge([bm25_source, li_dense_results])
+        
+        li_ndcg, li_recall = evaluate_system("LlamaIndex (Hybrid)", li_hybrid_results, qrels, K)
+        results_data.append({"Framework": "LlamaIndex (Hybrid)", "nDCG@10": li_ndcg, "Recall@10": li_recall})
+
     # 2. Run SplatRag Ablation Study
     print("\nRunning SplatRag Ablation Study...")
     
@@ -390,8 +503,8 @@ def main():
         plt.style.use('ggplot')
         
         # Remove old file if exists to ensure update
-        if os.path.exists('rag_benchmark_v3.png'):
-            os.remove('rag_benchmark_v3.png')
+        if os.path.exists('rag_benchmark_v4.png'):
+            os.remove('rag_benchmark_v4.png')
         
         names = [r["Framework"] for r in results_data]
         ndcg = [r["nDCG@10"] for r in results_data]
@@ -425,8 +538,8 @@ def main():
         autolabel(rects2)
 
         plt.subplots_adjust(bottom=0.25) # Give more room for labels
-        plt.savefig("rag_benchmark_v3.png", dpi=300)
-        print("Plot saved to rag_benchmark_v3.png")
+        plt.savefig("rag_benchmark_v4.png", dpi=300)
+        print("Plot saved to rag_benchmark_v4.png")
     except ImportError:
         print("Matplotlib not found, skipping plot.")
 

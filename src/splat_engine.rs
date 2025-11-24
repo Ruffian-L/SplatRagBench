@@ -1,13 +1,13 @@
 use crate::adapter::SplatAdapter;
 use crate::token_promotion::dynamic_tokenizer::DynamicTokenizer;
 use candle_core::{Tensor, Result, Device};
-use crate::model::Model as MyBaseModel; 
+use crate::llm::qwen::Model as MyBaseModel; 
 
 pub struct SplatEngine {
-    base_model: MyBaseModel,      // Your standard LLM (Qwen, etc.)
-    adapter: SplatAdapter,        // The new 64->Hidden Bridge
-    tokenizer: DynamicTokenizer,  // The Manager of IDs
-    device: Device,
+    pub base_model: MyBaseModel,      // Your standard LLM (Qwen, etc.)
+    pub adapter: SplatAdapter,        // The new 64->Hidden Bridge
+    pub tokenizer: DynamicTokenizer,  // The Manager of IDs
+    pub device: Device,
 }
 
 impl SplatEngine {
