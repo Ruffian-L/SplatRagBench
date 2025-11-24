@@ -7,6 +7,14 @@ import sys
 from collections import Counter, defaultdict
 from typing import List, Dict, Tuple
 
+try:
+    from langchain_community.retrievers import BM25Retriever
+    from langchain_core.documents import Document
+    LANGCHAIN_AVAILABLE = True
+except ImportError:
+    LANGCHAIN_AVAILABLE = False
+    print("LangChain not found. Skipping LangChain benchmarks.")
+
 # Config
 DATASET = "scifact"
 SPLIT = "test"
@@ -243,6 +251,26 @@ def run_splatrag(corpus, queries, config_name="Default", w_cos=10.0, w_bm25=1.0,
             
     return results
 
+def run_langchain_bm25(corpus, queries):
+    if not LANGCHAIN_AVAILABLE:
+        return {}
+    
+    print("Initializing LangChain BM25 Retriever...")
+    documents = [
+        Document(page_content=f"{doc['title']}. {doc['text']}", metadata={"id": doc["_id"]})
+        for doc in corpus
+    ]
+    retriever = BM25Retriever.from_documents(documents)
+    retriever.k = K
+    
+    results = {}
+    for q in queries:
+        qid = q["_id"]
+        docs = retriever.invoke(q["text"])
+        results[qid] = [d.metadata["id"] for d in docs]
+        
+    return results
+
 # --- Main ---
 
 def main():
@@ -275,6 +303,17 @@ def main():
     bm25_ndcg, bm25_recall = evaluate_system("Python BM25", bm25_results, qrels, K)
     # bm25_ndcg, bm25_recall = 0.0, 0.0
     
+    results_data = [
+        {"Framework": "Python BM25 (Baseline)", "nDCG@10": bm25_ndcg, "Recall@10": bm25_recall},
+    ]
+
+    # 1.5 Run LangChain BM25
+    if LANGCHAIN_AVAILABLE:
+        print("\nRunning LangChain BM25...")
+        lc_results = run_langchain_bm25(corpus, queries)
+        lc_ndcg, lc_recall = evaluate_system("LangChain (BM25)", lc_results, qrels, K)
+        results_data.append({"Framework": "LangChain (BM25)", "nDCG@10": lc_ndcg, "Recall@10": lc_recall})
+
     # 2. Run SplatRag Ablation Study
     print("\nRunning SplatRag Ablation Study...")
     
@@ -285,9 +324,7 @@ def main():
         ("SplatRag (Nuclear)", 30.0, 40.0, 15.0)
     ]
     
-    results_data = [
-        {"Framework": "Python BM25 (Baseline)", "nDCG@10": bm25_ndcg, "Recall@10": bm25_recall},
-    ]
+    # results_data initialized above
     
     for name, w_cos, w_bm25, w_rad in configs:
         sr_results = run_splatrag(corpus, queries, name, w_cos, w_bm25, w_rad)

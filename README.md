@@ -13,7 +13,8 @@ SplatRag outperforms standard baselines by combining multiple signals.
 | Configuration | nDCG@10 | Recall@10 | Verdict |
 | :--- | :--- | :--- | :--- |
 | **Python BM25 (Baseline)** | 0.7073 | 0.7970 | **Weak baseline** (simple script). |
-| **SplatRag (BM25 Only)** | 0.7694 | 0.9090 | **The Heavy Lifter**. Tantivy's Rust-based BM25 is vastly superior to the Python script. |
+| **LangChain (BM25)** | 0.6562 | 0.7250 | **Industry Standard**. Surprisingly weaker than the raw Python script on this dataset. |
+| **SplatRag (BM25 Only)** | 0.7694 | 0.9090 | **The Heavy Lifter**. Tantivy's Rust-based BM25 is vastly superior to both Python and LangChain. |
 | **SplatRag (Dense Only)** | 0.6291 | 0.7460 | **The Weak Link**. Nomic embeddings alone struggle with SciFact's specific terminology. |
 | **SplatRag (Hybrid)** | **0.7822** | **0.9090** | **The Winner**. Combining the strong BM25 with the weak Dense + Physics yields the peak score. |
 | **SplatRag (Nuclear)** | 0.7708 | 0.9090 | **Overkill**. Cranking weights to 40/30/15 degraded performance slightly vs the balanced Hybrid. |
