@@ -11,4 +11,8 @@ transformers
 tqdm
 scikit-learn
 matplotlib
+langchain
+langchain-community
+faiss-cpu
+sentence-transformers
 
