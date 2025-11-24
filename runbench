@@ -33,4 +33,4 @@ cargo build --release --bin ingest
 
 # 3. Run Benchmark
 echo -e "${GREEN}Running Benchmark...${NC}"
-./venv/bin/python rag_benchmark.py
+yes | ./venv/bin/python rag_benchmark.py

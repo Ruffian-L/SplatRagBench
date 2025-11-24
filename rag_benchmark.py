@@ -401,6 +401,18 @@ def main():
     else:
         queries = queries_with_qrels
 
+    # 0. Pre-download Nomic model to avoid prompts
+    print("\nPre-downloading Nomic model to avoid prompts...")
+    try:
+        from transformers import AutoModel, AutoTokenizer
+        model_id = "nomic-ai/nomic-embed-text-v1.5"
+        # This caches the model with trust_remote_code=True
+        AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+        AutoModel.from_pretrained(model_id, trust_remote_code=True)
+        print("Nomic model downloaded and cached.")
+    except Exception as e:
+        print(f"Warning: Could not pre-download model: {e}")
+
     # 1. Run Python BM25 Baseline
     print("\nRunning BM25 Baseline...")
     corpus_texts = [f"{doc['title']}. {doc['text']}" for doc in corpus]
@@ -493,6 +505,16 @@ def main():
         writer.writerows(results_data)
         
     print("\nResults saved to benchmark_results.csv")
+
+    # 3.5 Save Text Report
+    with open("benchmark_report.txt", "w") as f:
+        f.write("SplatRag Benchmark Report\n")
+        f.write("=========================\n\n")
+        f.write(f"{'Framework':<25} | {'nDCG@10':<10} | {'Recall@10':<10}\n")
+        f.write("-" * 51 + "\n")
+        for row in results_data:
+            f.write(f"{row['Framework']:<25} | {row['nDCG@10']:.4f}     | {row['Recall@10']:.4f}\n")
+    print("Report saved to benchmark_report.txt")
     
     # 4. Plot
     try:
