@@ -1,95 +1,82 @@
-# SplatRag: Physics-Based Hybrid Retrieval (Benchmark Suite) 🧠✨
+# SplatRagBench
 
-> **Note:** This is a standalone benchmark distribution. It contains the core Rust engine and evaluation scripts for the SciFact dataset. It does **not** include the full MCP server, Cursor integration, or live ingestion pipeline found in the main SplatRag repository. This is purely for reproducing performance metrics.
+**Physics-/structure-inspired hybrid retrieval** evaluation suite (SciFact-oriented).
 
-**SplatRag** is an experimental retrieval engine that fuses **Lexical Search (BM25)**, **Dense Vector Search (Nomic)**, and a novel **"Needle Physics"** ranking signal based on the geometric properties of token clusters in high-dimensional space.
+**Lead:** Jason Van Pham ([Ruffian-L](https://github.com/Ruffian-L))  
+Standalone **benchmark distribution** — Rust engine + eval scripts. Not the full historical MCP/Cursor product stack.
 
-### 🏆 Benchmark Progression
+> **Not** third-party certification · **not** “SOTA forever” marketing.  
+> Numbers below are **repository-run project evaluations** (SciFact). Re-run with `./runbench` and keep the labels.
 
-**Round 3: SplatRag vs. RAGFlow (Current)**
-![Round 3](rag_benchmark_v3.png)
+## Best face of this repo
 
-**Round 2: SplatRag vs. LangChain**
-![Round 2](rag_benchmark_v2.png)
+| Strength | Where |
+|----------|--------|
+| **Repro path** | `./runbench` (venv, deps, Rust build, SciFact, ablation plot) |
+| **Hybrid ablation table** | BM25 / dense / hybrid / “nuclear” weights — same harness |
+| **Rust BM25** | Tantivy path as a strong lexical arm on this dataset |
+| **Honest dual mode** | Pair with [cathedral-beir](https://github.com/Ruffian-L/cathedral-beir) (pure dense BEIR) — invent vs simple baseline |
+| **What failed** | Dense-only weaker on SciFact terms; over-weighted “nuclear” can lose to balanced hybrid |
 
-**Round 1: SplatRag vs. Python Baselines**
-![Round 1](rag_benchmark.png)
+## What it is
 
-## 🚀 Performance (SciFact Benchmark)
+Experimental retrieval that fuses:
 
-SplatRag outperforms standard baselines by combining multiple signals.
+1. **Lexical** — BM25 (Tantivy)  
+2. **Dense** — embeddings (Nomic-class path in this suite)  
+3. **Geometry / “needle physics”** — structure-inspired score from token-cluster geometry (project metric; not a claim of physical law)
 
-| Configuration | nDCG@10 | Recall@10 | Verdict |
-| :--- | :--- | :--- | :--- |
-| **Python BM25 (Baseline)** | 0.7073 | 0.7970 | **Weak baseline** (simple script). |
-| **LangChain (BM25)** | 0.6562 | 0.7250 | **Industry Standard**. Surprisingly weaker than the raw Python script on this dataset. |
-| **RAGFlow (Hybrid)** | 0.7357 | 0.8120 | **The Deep Doc Beast**. Stronger than BM25, but lacks the geometric precision of SplatRag. |
-| **SplatRag (BM25 Only)** | 0.7694 | 0.9090 | **The Heavy Lifter**. Tantivy's Rust-based BM25 is vastly superior to both Python and LangChain. |
-| **SplatRag (Dense Only)** | 0.6291 | 0.7460 | **The Weak Link**. Nomic embeddings alone struggle with SciFact's specific terminology. |
-| **SplatRag (Hybrid)** | **0.7822** | **0.9090** | **The Winner**. Combining the strong BM25 with the weak Dense + Physics yields the peak score. |
-| **SplatRag (Nuclear)** | 0.7708 | 0.9090 | **Overkill**. Cranking weights to 40/30/15 degraded performance slightly vs the balanced Hybrid. |
+## Project evaluation numbers (SciFact, as recorded in-repo)
 
-*Results verified on the SciFact dataset (November 2025).*
+| Configuration | nDCG@10 | Recall@10 | Read as |
+| :--- | ---: | ---: | :--- |
+| Python BM25 (simple baseline) | 0.7073 | 0.7970 | Weak baseline script |
+| LangChain (BM25) | 0.6562 | 0.7250 | Industry wrapper on this set |
+| RAGFlow (hybrid) | 0.7357 | 0.8120 | External hybrid reference |
+| SplatRag BM25 only | 0.7694 | 0.9090 | Strong lexical arm |
+| SplatRag dense only | 0.6291 | 0.7460 | Weak link on SciFact terms |
+| **SplatRag hybrid** | **0.7822** | **0.9090** | Best **in this table** (project eval) |
+| SplatRag “nuclear” weights | 0.7708 | 0.9090 | Overkill — slightly worse than hybrid |
 
-## 🧪 How It Works
+*Verified on SciFact inside this project (Nov 2025 era). Not independent lab certification.*
 
-SplatRag isn't just another vector database. It treats memories as physical objects:
+### Plots (historical progression)
 
-1.  **Ingestion**: Documents are embedded using **Nomic v1.5 (Matryoshka)**.
-2.  **Physics Simulation**: We run PCA and clustering on the token embeddings to generate a "Splat" — a 3D geometric representation of the document's semantic shape.
-3.  **Hybrid Ranking**:
-    *   **BM25**: For exact keyword matches (via `tantivy`).
-    *   **Cosine Similarity**: For semantic understanding.
-    *   **Radial/Physics Score**: A proprietary metric that measures how "dense" or "central" a query is relative to the document's semantic center of mass.
+Round 3 / 2 / 1 images in-repo (`rag_benchmark_v3.png`, `rag_benchmark_v2.png`, `rag_benchmark.png`) are **ablation storyboards**, not peer-reviewed leaderboard screenshots.
 
-## 📦 Quick Start
+## Quick start
 
-This repository is a standalone benchmark suite. You can run it with a single command.
+**Needs:** Linux/macOS · Python 3.10+ · Rust (script may assist install)
 
-### Prerequisites
-*   **Linux/macOS**
-*   **Python 3.10+**
-*   **Rust** (The script will auto-install it if missing)
-
-### Run the Benchmark
 ```bash
 ./runbench
 ```
 
-This automation script will:
-1.  Create a local Python `venv`.
-2.  Install dependencies (`torch`, `transformers`, `rank_bm25`, etc.).
-3.  Compile the high-performance Rust binaries.
-4.  Ingest the `datasets/scifact` corpus (if not already cached).
-5.  Run the ablation study and generate the plot above.
+1. Local venv + deps  
+2. Compile Rust binaries  
+3. Ingest `datasets/scifact` if needed  
+4. Ablation + plot  
 
-## 📂 Project Structure
+### Manual
 
-*   `src/`: **Rust Core**. The high-performance engine handling the index and physics calculations.
-*   `rag_benchmark.py`: **Orchestrator**. Runs the ablation study and generates metrics.
-*   `fast_ingest.py`: **Ingestion Pipeline**. Handles embedding generation and `.geom` file creation.
-*   `models/`: Contains the **Manifold Projector** (PCA/Physics model).
-*   `datasets/`: Includes the **SciFact** corpus and queries.
-
-## 🛠️ Manual Usage
-
-If you want to run components individually:
-
-**1. Ingest Data**
 ```bash
 ./venv/bin/python fast_ingest.py
-```
-
-**2. Run Retrieval Server (Optional)**
-```bash
-cargo run --release --bin mcp_server
-```
-
-**3. Run Benchmark**
-```bash
 ./venv/bin/python rag_benchmark.py
+# optional: cargo run --release --bin mcp_server
 ```
 
-## 📜 License
+## Layout
 
-MIT License. Free to dream.
+| Path | Role |
+|------|------|
+| `src/` | Rust core (index + physics-style scores) |
+| `rag_benchmark.py` | Ablation orchestrator |
+| `fast_ingest.py` | Embeddings + `.geom` |
+| `models/` | Manifold / PCA helpers |
+| `datasets/` | SciFact corpus + queries |
+
+## License
+
+MIT.
+
+**By Jason Van Pham**, with AI collaborators where they moved the work. Dual retrieval track: **SplatRagBench** (rich hybrid) · **cathedral-beir** (pure dense).
